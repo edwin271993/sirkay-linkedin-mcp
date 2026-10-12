@@ -1,0 +1,16 @@
+name = "sirkay-linkedin-mcp"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+LINKEDIN_CLIENT_ID = "77t38epf1n01hj"
+# Versión de la API de LinkedIn (AAAAMM). Si LinkedIn responde "NONEXISTENT_VERSION", baja un mes.
+LINKEDIN_VERSION = "202609"
+
+# Sin id: Wrangler crea el namespace KV automáticamente en el primer deploy.
+[[kv_namespaces]]
+binding = "KV"
+
+# Secretos (NO van en este archivo). Se cargan en Cloudflare:
+#   Workers & Pages → sirkay-linkedin-mcp → Settings → Variables and Secrets
+#   LINKEDIN_CLIENT_SECRET y MCP_SECRET (tipo Secret)
