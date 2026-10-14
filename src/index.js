@@ -17,11 +17,14 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "") || "/";
 
+    // Normaliza la clave (quita espacios o saltos de línea al pegar)
+    env.MCP_SECRET = (env.MCP_SECRET || "").trim();
+
     try {
       if (path === "/") return text("Sirkay LinkedIn MCP activo.");
       if (path === "/login") return login(url, env);
       if (path === "/callback") return callback(url, env);
-      if (path === `/mcp/${env.MCP_SECRET}`) return mcp(request, env, url);
+      if (env.MCP_SECRET && path === `/mcp/${env.MCP_SECRET}`) return mcp(request, env, url);
       return text("No encontrado", 404);
     } catch (err) {
       return text(`Error: ${err.message}`, 500);
@@ -32,7 +35,11 @@ export default {
 // ---------- OAuth ----------
 
 async function login(url, env) {
-  if (url.searchParams.get("key") !== env.MCP_SECRET) return text("No autorizado", 401);
+  if (!env.MCP_SECRET) return text("Falta configurar MCP_SECRET en Cloudflare.", 500);
+  const key = (url.searchParams.get("key") || "").trim();
+  if (key !== env.MCP_SECRET) {
+    return text(`No autorizado. La clave recibida tiene ${key.length} caracteres y la configurada tiene ${env.MCP_SECRET.length}.`, 401);
+  }
   const state = crypto.randomUUID();
   await env.KV.put(`state:${state}`, "1", { expirationTtl: 600 });
   const auth = new URL(LI_AUTH);
