@@ -88,8 +88,9 @@ def antes_despues(spec):
 def pasos(spec):
     rows = "".join(
         f'<div style="display:flex; gap:36px; align-items:baseline; padding:30px 0; border-top:2px solid {LINE};">'
-        f'<span class="h" style="font-size:56px; color:{ORANGE}; min-width:80px;">{i:02d}</span>'
-        f'<span style="font-size:38px; line-height:1.3; font-weight:500;">{e(t)}</span></div>'
+        + (f'<span class="h" style="font-size:56px; color:{ORANGE}; min-width:80px;">{i:02d}</span>' if spec.get("numerar", True)
+           else f'<span style="width:18px; height:18px; background:{ORANGE}; flex:none; transform:translateY(-6px);"></span>')
+        + f'<span style="font-size:38px; line-height:1.3; font-weight:500;">{e(t)}</span></div>'
         for i, t in enumerate(spec["pasos"], 1))
     return f"""
 <div class="canvas" style="background:#FFFFFF; color:{NAVY};">
@@ -104,7 +105,7 @@ def pregunta(spec):
     return f"""
 <div class="canvas" style="background:{CREAM}; color:{NAVY}; justify-content:center;">
   <div class="rule" style="margin-bottom:48px;"></div>
-  <div class="h" style="font-size:84px; line-height:1.06; max-width:880px;">{e(spec['pregunta'])}</div>
+  <div class="h" style="font-size:76px; line-height:1.08; max-width:880px;">{e(spec['pregunta'])}</div>
   <div style="font-size:38px; line-height:1.35; color:{SLATE}; margin-top:44px; max-width:820px;">{e(spec.get('apoyo',''))}</div>
   {footer(spec)}
 </div>"""
