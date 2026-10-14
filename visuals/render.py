@@ -32,7 +32,31 @@ body {{ font-family:'Inter','Poppins',Arial,sans-serif; -webkit-font-smoothing:a
 .mark {{ display:flex; align-items:center; gap:14px; font-family:'Poppins',sans-serif; font-weight:600; font-size:24px; }}
 .logo {{ width:44px; height:44px; border-radius:10px; background:{NAVY}; color:{ORANGE}; display:flex; align-items:center; justify-content:center; font-family:'Poppins',sans-serif; font-weight:700; font-size:28px; }}
 .rule {{ width:72px; height:6px; background:{ORANGE}; }}
+.rows.sk > div:first-child {{ border-top:none !important; }}
 """
+
+
+# "El trazo Sirkay": recurso gráfico propio. Una línea que empieza enredada (proceso
+# desordenado) y termina recta en un cuadrado (el logo): primero ordenamos, luego automatizamos.
+TRAZO = ("M4,44 C24,8 44,8 52,40 C60,72 30,78 34,52 C38,24 78,10 96,36 C112,60 92,80 120,70 "
+         "C150,58 140,18 172,22 C204,26 190,64 222,58 C250,52 262,44 300,44 L870,44")
+
+
+def trazo(margin="0"):
+    return (f'<svg width="888" height="88" viewBox="0 0 888 88" style="display:block; margin:{margin};">'
+            f'<path d="{TRAZO}" fill="none" stroke="{ORANGE}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>'
+            f'<rect x="866" y="35" width="18" height="18" fill="{ORANGE}"/></svg>')
+
+
+def es_sirkay(spec):
+    return spec.get("firma", "Sirkay Lab") == "Sirkay Lab"
+
+
+def separador(spec, margin):
+    # Sirkay usa su trazo; los posts personales (Fintech) usan una línea simple.
+    if es_sirkay(spec):
+        return trazo(margin)
+    return f'<div class="rule" style="margin:{margin};"></div>'
 
 
 def e(s):
@@ -44,7 +68,8 @@ def footer(spec, dark=False):
     fuente = spec.get("fuente", "")
     muted = "rgba(255,255,255,0.6)" if dark else SLATE
     fg = "#FFFFFF" if dark else NAVY
-    logo = '<div class="logo">S</div>' if firma == "Sirkay Lab" else ""
+    logo_style = f' style="background:{ORANGE}; color:{NAVY};"' if dark else ""
+    logo = f'<div class="logo"{logo_style}>S</div>' if firma == "Sirkay Lab" else ""
     src = f'<span style="color:{muted}">Fuente: {e(fuente)}</span>' if fuente else "<span></span>"
     return f'<div class="footer">{src}<div class="mark" style="color:{fg}">{logo}{e(firma)}</div></div>'
 
@@ -56,7 +81,7 @@ def dato(spec):
   <div class="kicker" style="color:{ORANGE}; margin-bottom:28px;">{e(spec.get('etiqueta',''))}</div>
   <div class="h" style="font-size:300px; line-height:0.9; color:{ORANGE};">{e(spec['cifra'])}</div>
   <div style="font-size:52px; line-height:1.2; font-weight:500; margin-top:36px; max-width:820px;">{e(spec['frase'])}</div>
-  <div class="rule" style="margin:48px 0 28px;"></div>
+  {separador(spec, "40px 0 24px")}
   <div class="h" style="font-size:38px; line-height:1.25; font-weight:600; color:rgba(255,255,255,0.88); max-width:820px;">{e(spec.get('remate',''))}</div>
   {footer(spec, dark=True)}
 </div>"""
@@ -71,7 +96,8 @@ def antes_despues(spec):
     return f"""
 <div class="canvas" style="background:{CREAM}; color:{NAVY};">
   <div class="h" style="font-size:68px; line-height:1.08; max-width:880px;">{e(spec['titulo'])}</div>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:64px; flex:1; max-height:560px;">
+  {trazo("40px 0 0") if es_sirkay(spec) else ""}
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:{'8px' if es_sirkay(spec) else '64px'}; flex:1; max-height:560px;">
     <div style="padding:44px 40px 0 0; border-right:2px solid {LINE};">
       <div class="kicker" style="color:{SLATE}; margin-bottom:34px;">Antes</div>
       <ul style="list-style:none; color:{SLATE};">{items(spec['antes'], '#9CA3AF', '×')}</ul>
@@ -95,8 +121,9 @@ def pasos(spec):
     return f"""
 <div class="canvas" style="background:#FFFFFF; color:{NAVY};">
   <div class="kicker" style="color:{ORANGE}; margin-bottom:24px;">{e(spec.get('etiqueta','Método'))}</div>
-  <div class="h" style="font-size:66px; line-height:1.08; max-width:880px; margin-bottom:56px;">{e(spec['titulo'])}</div>
-  <div style="border-bottom:2px solid {LINE};">{rows}</div>
+  <div class="h" style="font-size:66px; line-height:1.08; max-width:880px; margin-bottom:{'24px' if es_sirkay(spec) else '56px'};">{e(spec['titulo'])}</div>
+  {trazo("0 0 24px") if es_sirkay(spec) else ""}
+  <div class="rows{' sk' if es_sirkay(spec) else ''}" style="border-bottom:2px solid {LINE};">{rows}</div>
   {footer(spec)}
 </div>"""
 
@@ -104,7 +131,7 @@ def pasos(spec):
 def pregunta(spec):
     return f"""
 <div class="canvas" style="background:{CREAM}; color:{NAVY}; justify-content:center;">
-  <div class="rule" style="margin-bottom:48px;"></div>
+  {separador(spec, "0 0 44px")}
   <div class="h" style="font-size:76px; line-height:1.08; max-width:880px;">{e(spec['pregunta'])}</div>
   <div style="font-size:38px; line-height:1.35; color:{SLATE}; margin-top:44px; max-width:820px;">{e(spec.get('apoyo',''))}</div>
   {footer(spec)}
