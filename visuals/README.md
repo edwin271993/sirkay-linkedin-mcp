@@ -1,7 +1,7 @@
 # Plantillas visuales Sirkay (LinkedIn)
 
 Sistema visual derivado de **UI/UX Pro Max** (nextlevelbuilder/ui-ux-pro-max-skill, MIT):
-estilo *Minimalism & Swiss*, patrón *Trust & Authority*, acento naranja solo para lo destacado,
+estilo *Minimalism & Swiss*, patrón *Trust & Authority*, revisado con frontend-design (Anthropic) y Huashu Design; acento naranja solo para lo destacado,
 sin degradados morados ni elementos de "IA".
 
 - Tipos: `dato`, `antes_despues`, `pasos`, `pregunta` (ver `ejemplos/*.json`).

@@ -2,7 +2,9 @@
 """Sirkay Lab – generador de imágenes para LinkedIn (estilo editorial, sin aspecto IA).
 
 Sistema visual derivado de UI/UX Pro Max (estilo "Minimalism & Swiss", patrón
-"Trust & Authority", acento solo para lo destacado, sin degradados morados de IA).
+"Trust & Authority"), revisado con frontend-design (Anthropic) y Huashu Design:
+sin etiquetas en MAYÚSCULAS, sin fondo crema, sin degradados, sin emojis, sin
+íconos decorativos; numeración solo en secuencias reales; un solo elemento memorable.
 
 Uso:
     python3 render.py spec.json salida.png
@@ -15,7 +17,7 @@ import sys
 
 NAVY = "#0A2540"
 ORANGE = "#EB5D2E"
-CREAM = "#F7F5F0"
+CREAM = "#F3F6F9"  # gris azulado frío (evita el crema #F4F1EA típico de la IA)
 SLATE = "#475569"
 LINE = "#E2E1DA"
 
@@ -25,7 +27,7 @@ html, body {{ width:1080px; height:1080px; }}
 body {{ font-family:'Inter','Poppins',Arial,sans-serif; -webkit-font-smoothing:antialiased; }}
 .canvas {{ width:1080px; height:1080px; padding:96px; position:relative; display:flex; flex-direction:column; }}
 .h {{ font-family:'Poppins','Inter',Arial,sans-serif; font-weight:700; letter-spacing:-0.02em; text-wrap:balance; }}
-.kicker {{ font-size:22px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; }}
+.kicker {{ font-size:26px; font-weight:600; letter-spacing:0; }}
 .footer {{ position:absolute; left:96px; right:96px; bottom:72px; display:flex; justify-content:space-between; align-items:center; font-size:22px; }}
 .mark {{ display:flex; align-items:center; gap:14px; font-family:'Poppins',sans-serif; font-weight:600; font-size:24px; }}
 .logo {{ width:44px; height:44px; border-radius:10px; background:{NAVY}; color:{ORANGE}; display:flex; align-items:center; justify-content:center; font-family:'Poppins',sans-serif; font-weight:700; font-size:28px; }}
