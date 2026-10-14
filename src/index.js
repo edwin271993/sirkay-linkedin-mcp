@@ -108,6 +108,7 @@ const TOOLS = [
       properties: {
         texto: { type: "string", description: "Texto del post (máx. 3000 caracteres)." },
         imagen_url: { type: "string", description: "URL pública de una imagen PNG o JPG (opcional)." },
+        imagen_base64: { type: "string", description: "Imagen PNG o JPG codificada en base64 (opcional, alternativa a imagen_url; máx. ~5 MB)." },
         texto_alternativo: { type: "string", description: "Descripción de la imagen para accesibilidad (opcional)." },
         visibilidad: { type: "string", enum: ["PUBLIC", "CONNECTIONS"], description: "Por defecto PUBLIC." },
       },
@@ -189,8 +190,8 @@ async function callTool(name, args, env, url) {
       isReshareDisabledByAuthor: false,
     };
 
-    if (args.imagen_url) {
-      const imageUrn = await uploadImage(args.imagen_url, tok, env);
+    if (args.imagen_url || args.imagen_base64) {
+      const imageUrn = await uploadImage(args, tok, env);
       post.content = { media: { id: imageUrn, altText: (args.texto_alternativo || "").slice(0, 4086) } };
     }
 
@@ -203,10 +204,20 @@ async function callTool(name, args, env, url) {
   throw new Error(`Herramienta desconocida: ${name}`);
 }
 
-async function uploadImage(imageUrl, tok, env) {
-  const img = await fetch(imageUrl);
-  if (!img.ok) throw new Error(`No se pudo descargar la imagen (${img.status}).`);
-  const bytes = await img.arrayBuffer();
+async function uploadImage(args, tok, env) {
+  let bytes, contentType;
+  if (args.imagen_base64) {
+    const b64 = args.imagen_base64.replace(/^data:[^,]+,/, "").replace(/\s/g, "");
+    const bin = atob(b64);
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    contentType = bytes[0] === 0x89 ? "image/png" : "image/jpeg";
+  } else {
+    const img = await fetch(args.imagen_url);
+    if (!img.ok) throw new Error(`No se pudo descargar la imagen (${img.status}).`);
+    bytes = await img.arrayBuffer();
+    contentType = img.headers.get("content-type") || "application/octet-stream";
+  }
 
   const init = await liFetch(`${LI_REST}/images?action=initializeUpload`, tok, env, {
     method: "POST",
@@ -217,7 +228,7 @@ async function uploadImage(imageUrl, tok, env) {
 
   const put = await fetch(value.uploadUrl, {
     method: "PUT",
-    headers: { Authorization: `Bearer ${tok.access_token}`, "Content-Type": img.headers.get("content-type") || "application/octet-stream" },
+    headers: { Authorization: `Bearer ${tok.access_token}`, "Content-Type": contentType },
     body: bytes,
   });
   if (!put.ok) throw new Error(`Error al subir la imagen (${put.status}): ${await put.text()}`);
