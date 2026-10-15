@@ -38,7 +38,7 @@ async function login(url, env) {
   if (!env.MCP_SECRET) return text("Falta configurar MCP_SECRET en Cloudflare.", 500);
   const key = (url.searchParams.get("key") || "").trim();
   if (key !== env.MCP_SECRET) {
-    return text(`No autorizado. La clave recibida tiene ${key.length} caracteres y la configurada tiene ${env.MCP_SECRET.length}.`, 401);
+    return text("No autorizado.", 401);
   }
   const state = crypto.randomUUID();
   await env.KV.put(`state:${state}`, "1", { expirationTtl: 600 });
