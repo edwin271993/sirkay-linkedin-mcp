@@ -99,11 +99,11 @@ def antes_despues(spec):
   {trazo("40px 0 0") if es_sirkay(spec) else ""}
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:{'8px' if es_sirkay(spec) else '64px'}; flex:1; max-height:560px;">
     <div style="padding:44px 40px 0 0; border-right:2px solid {LINE};">
-      <div class="kicker" style="color:{SLATE}; margin-bottom:34px;">Antes</div>
+      <div class="kicker" style="color:{SLATE}; margin-bottom:34px;">{e(spec.get('etiqueta_antes', 'Antes'))}</div>
       <ul style="list-style:none; color:{SLATE};">{items(spec['antes'], '#9CA3AF', '×')}</ul>
     </div>
     <div style="padding:44px 0 0 40px;">
-      <div class="kicker" style="color:{ORANGE}; margin-bottom:34px;">Después</div>
+      <div class="kicker" style="color:{ORANGE}; margin-bottom:34px;">{e(spec.get('etiqueta_despues', 'Después'))}</div>
       <ul style="list-style:none; color:{NAVY}; font-weight:500;">{items(spec['despues'], ORANGE, '✓')}</ul>
     </div>
   </div>
