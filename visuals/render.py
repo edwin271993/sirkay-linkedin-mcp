@@ -43,7 +43,7 @@ TRAZO = ("M4,44 C24,8 44,8 52,40 C60,72 30,78 34,52 C38,24 78,10 96,36 C112,60 9
 
 
 def trazo(margin="0"):
-    return (f'<svg width="888" height="88" viewBox="0 0 888 88" style="display:block; margin:{margin};">'
+    return (f'<svg width="888" height="88" viewBox="0 0 888 88" style="display:block; flex:none; margin:{margin};">'
             f'<path d="{TRAZO}" fill="none" stroke="{ORANGE}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>'
             f'<rect x="866" y="35" width="18" height="18" fill="{ORANGE}"/></svg>')
 
@@ -112,8 +112,11 @@ def antes_despues(spec):
 
 
 def pasos(spec):
+    # Con más de 3 pasos se compacta para que no choque con el pie.
+    n = len(spec["pasos"])
+    pad = 30 if n <= 3 else (16 if n == 4 else 8)
     rows = "".join(
-        f'<div style="display:flex; gap:36px; align-items:baseline; padding:30px 0; border-top:2px solid {LINE};">'
+        f'<div style="display:flex; gap:36px; align-items:baseline; padding:{pad}px 0; border-top:2px solid {LINE};">'
         + (f'<span class="h" style="font-size:56px; color:{ORANGE}; min-width:80px;">{i:02d}</span>' if spec.get("numerar", True)
            else f'<span style="width:18px; height:18px; background:{ORANGE}; flex:none; transform:translateY(-6px);"></span>')
         + f'<span style="font-size:38px; line-height:1.3; font-weight:500;">{e(t)}</span></div>'
