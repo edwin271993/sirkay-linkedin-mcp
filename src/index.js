@@ -102,7 +102,7 @@ const TOOLS = [
   },
   {
     name: "publicar_post",
-    description: "Publica un post en el perfil personal de LinkedIn del usuario. Úsalo SOLO con un texto que el usuario aprobó explícitamente. Opcionalmente adjunta una imagen pública (PNG o JPG) por URL.",
+    description: "Publica un post en el perfil personal de LinkedIn del usuario. Úsalo SOLO con un texto que el usuario aprobó explícitamente. Opcionalmente adjunta una imagen pública (PNG o JPG) o un video MP4 por URL (no ambos).",
     inputSchema: {
       type: "object",
       properties: {
@@ -110,6 +110,8 @@ const TOOLS = [
         imagen_url: { type: "string", description: "URL pública de una imagen PNG o JPG (opcional)." },
         imagen_base64: { type: "string", description: "Imagen PNG o JPG codificada en base64 (opcional, alternativa a imagen_url; máx. ~5 MB)." },
         texto_alternativo: { type: "string", description: "Descripción de la imagen para accesibilidad (opcional)." },
+        video_url: { type: "string", description: "URL pública de un video MP4 (opcional, en lugar de imagen; máx. ~200 MB, 3 s a 10 min)." },
+        video_titulo: { type: "string", description: "Título corto del video (opcional)." },
         visibilidad: { type: "string", enum: ["PUBLIC", "CONNECTIONS"], description: "Por defecto PUBLIC." },
       },
       required: ["texto"],
@@ -144,7 +146,7 @@ async function handleRpc(msg, env, url) {
       return ok({
         protocolVersion: params?.protocolVersion || "2025-06-18",
         capabilities: { tools: {} },
-        serverInfo: { name: "sirkay-linkedin", version: "1.0.0" },
+        serverInfo: { name: "sirkay-linkedin", version: "1.1.0" },
         instructions: "Publica en LinkedIn solo contenido aprobado explícitamente por el usuario.",
       });
     case "ping":
@@ -190,7 +192,11 @@ async function callTool(name, args, env, url) {
       isReshareDisabledByAuthor: false,
     };
 
-    if (args.imagen_url || args.imagen_base64) {
+    if (args.video_url && (args.imagen_url || args.imagen_base64)) throw new Error("Adjunta imagen o video, no ambos.");
+    if (args.video_url) {
+      const videoUrn = await uploadVideo(args, tok, env);
+      post.content = { media: { id: videoUrn, title: (args.video_titulo || "").slice(0, 200) } };
+    } else if (args.imagen_url || args.imagen_base64) {
       const imageUrn = await uploadImage(args, tok, env);
       post.content = { media: { id: imageUrn, altText: (args.texto_alternativo || "").slice(0, 4086) } };
     }
@@ -233,6 +239,49 @@ async function uploadImage(args, tok, env) {
   });
   if (!put.ok) throw new Error(`Error al subir la imagen (${put.status}): ${await put.text()}`);
   return value.image;
+}
+
+// Video: initializeUpload -> PUT por partes -> finalizeUpload -> esperar AVAILABLE
+async function uploadVideo(args, tok, env) {
+  const vid = await fetch(args.video_url);
+  if (!vid.ok) throw new Error(`No se pudo descargar el video (${vid.status}).`);
+  const bytes = new Uint8Array(await vid.arrayBuffer());
+
+  const init = await liFetch(`${LI_REST}/videos?action=initializeUpload`, tok, env, {
+    method: "POST",
+    body: JSON.stringify({ initializeUploadRequest: { owner: tok.person_urn, fileSizeBytes: bytes.length, uploadCaptions: false, uploadThumbnail: false } }),
+  });
+  if (!init.ok) throw new Error(`Error al iniciar la subida del video (${init.status}): ${await init.text()}`);
+  const { value } = await init.json();
+
+  const etags = [];
+  for (const part of value.uploadInstructions) {
+    const put = await fetch(part.uploadUrl, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${tok.access_token}`, "Content-Type": "application/octet-stream" },
+      body: bytes.slice(part.firstByte, part.lastByte + 1),
+    });
+    if (!put.ok) throw new Error(`Error al subir una parte del video (${put.status}): ${await put.text()}`);
+    etags.push(put.headers.get("etag"));
+  }
+
+  const fin = await liFetch(`${LI_REST}/videos?action=finalizeUpload`, tok, env, {
+    method: "POST",
+    body: JSON.stringify({ finalizeUploadRequest: { video: value.video, uploadToken: value.uploadToken || "", uploadedPartIds: etags } }),
+  });
+  if (!fin.ok) throw new Error(`Error al cerrar la subida del video (${fin.status}): ${await fin.text()}`);
+
+  // LinkedIn procesa el video; esperar a que esté disponible (máx. ~90 s)
+  for (let i = 0; i < 18; i++) {
+    const st = await liFetch(`${LI_REST}/videos/${encodeURIComponent(value.video)}`, tok, env, { method: "GET" });
+    if (st.ok) {
+      const info = await st.json();
+      if (info.status === "AVAILABLE") return value.video;
+      if (info.status === "PROCESSING_FAILED") throw new Error("LinkedIn no pudo procesar el video.");
+    }
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+  throw new Error("El video sigue procesándose en LinkedIn; intenta publicar de nuevo en unos minutos.");
 }
 
 function liFetch(url, tok, env, init = {}) {

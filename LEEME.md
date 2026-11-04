@@ -4,7 +4,13 @@ Servidor MCP propio para que Claude publique en tu perfil de LinkedIn usando la 
 
 ## Herramientas que expone a Claude
 - `estado_token`: si la conexión está activa y cuántos días le quedan.
-- `publicar_post`: publica texto (máx. 3000 caracteres) con imagen opcional por URL.
+- `publicar_post`: publica texto (máx. 3000 caracteres) con imagen opcional por URL, o con un video MP4 por URL (`video_url`, opcional `video_titulo`).
+
+## Cómo se suben los videos
+1. El video (MP4, 3 s a 10 min, hasta ~200 MB) se sube a `publicados/` en este repo, para que tenga una URL pública (`raw.githubusercontent.com/...`).
+2. `publicar_post` con `video_url` descarga el MP4 y usa la Videos API de LinkedIn: `initializeUpload` → `PUT` de cada parte → `finalizeUpload`.
+3. Espera hasta ~90 s a que LinkedIn marque el video como `AVAILABLE` y recién ahí crea el post.
+4. Si responde "sigue procesándose", se vuelve a llamar en unos minutos (el post todavía no se creó, no hay duplicado).
 
 ## Despliegue desde GitHub (sin terminal, ~10 min)
 
